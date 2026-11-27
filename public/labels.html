@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Print QR labels · Stock Finder</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+  <style>
+    :root { --ink: #17201f; --muted: #5d6967; --line: #dfe4e2; --primary: #0e6e66; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #eef1f0; }
+    .controls { position: sticky; top: 0; z-index: 2; background: #fff; border-bottom: 1px solid var(--line); padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end; }
+    .controls h1 { font-size: 18px; margin: 0 12px 0 0; width: 100%; }
+    .controls label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .controls select, .controls input[type=text], .controls input[type=password] { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; min-width: 180px; color: var(--ink); }
+    .controls .check { display: flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 500; }
+    .controls button { font: inherit; font-weight: 650; padding: 10px 18px; border-radius: 9px; border: 0; background: var(--primary); color: #fff; cursor: pointer; }
+    .controls a { color: var(--primary); font-weight: 600; }
+    .controls [hidden] { display: none !important; }
+    #count { font-weight: 650; color: var(--ink); align-self: center; }
+    #msg { width: 100%; color: #b42318; }
+    #msg:empty { display: none; }
+    .sheet { margin: 16px auto; background: #fff; }
+
+    /* label layouts (set by the size menu) */
+    .label { overflow: hidden; display: flex; align-items: center; gap: 2.2mm; padding: 2mm; color: #000; break-inside: avoid; page-break-inside: avoid; }
+    .label .qr { flex: 0 0 auto; }
+    .label .qr svg { display: block; width: 100%; height: 100%; }
+    .label .txt { min-width: 0; flex: 1; display: grid; gap: .6mm; }
+    .label .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; line-height: 1.05; word-break: break-all; }
+    .label .nm { font-weight: 650; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .label .meta { font-family: ui-monospace, Menlo, Consolas, monospace; line-height: 1.15; }
+    .label.rack { border: .9mm solid #000; border-radius: 1.5mm; }
+    .label.rack .meta { font-weight: 800; letter-spacing: .04em; }
+    .label .home { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 800; line-height: 1.1; }
+
+    .a4 .sheet { width: 198mm; padding: 6mm 0; display: grid; grid-template-columns: repeat(3, 64mm); grid-auto-rows: 33mm; gap: 2mm; justify-content: center; }
+    .a4 .label { width: 64mm; height: 33mm; outline: .2mm dashed #c9cfcd; }
+    .a4 .qr { width: 27mm; height: 27mm; }
+    .a4 .code { font-size: 6.2mm; } .a4 .nm { font-size: 3mm; } .a4 .meta { font-size: 2.6mm; } .a4 .home { font-size: 3.6mm; }
+
+    .t50 .sheet, .t38 .sheet { width: max-content; display: grid; gap: 4mm; padding: 4mm; background: none; }
+    .t50 .label { width: 50mm; height: 30mm; background: #fff; }
+    .t50 .qr { width: 25mm; height: 25mm; }
+    .t50 .code { font-size: 5.2mm; } .t50 .nm { font-size: 2.6mm; } .t50 .meta { font-size: 2.3mm; } .t50 .home { font-size: 3.2mm; }
+    .t38 .label { width: 38mm; height: 25mm; background: #fff; gap: 1.5mm; padding: 1.5mm; }
+    .t38 .qr { width: 21mm; height: 21mm; }
+    .t38 .code { font-size: 3.8mm; } .t38 .nm { font-size: 2.1mm; -webkit-line-clamp: 3; } .t38 .meta { font-size: 1.9mm; } .t38 .home { font-size: 2.6mm; }
+
+    @media print {
+      body { background: #fff; }
+      .controls { display: none; }
+      .sheet { margin: 0; padding: 0 !important; }
+      .a4 .label { outline: none; }
+      .t50 .sheet, .t38 .sheet { display: block; gap: 0; padding: 0; }
+      .t50 .label, .t38 .label { page-break-after: always; break-after: page; }
+    }
+  </style>
+  <style id="pageRule">@page { size: A4; margin: 6mm; }</style>
+</head>
+<body class="a4">
+  <div class="controls">
+    <h1>Print QR labels <a href="/" style="font-size:14px;font-weight:600;margin-left:10px">← back to app</a></h1>
+    <label>Labels for
+      <select id="kind">
+        <option value="both">Racks and their bottles</option>
+        <option value="racks">Racks only</option>
+        <option value="bottles">Bottles only</option>
+      </select>
+    </label>
+    <label id="levelWrap">Rack stickers
+      <select id="level">
+        <option value="rack">One per rack (1C3)</option>
+        <option value="slot">One per slot (1C3-3C)</option>
+      </select>
+    </label>
+    <label id="perWrap" hidden>How many
+      <select id="per">
+        <option value="loc">One per location (each container)</option>
+        <option value="sku">One per material</option>
+      </select>
+    </label>
+    <label><span id="filterLabel">Only racks starting with</span>
+      <input id="filter" type="text" placeholder="e.g. 1B">
+    </label>
+    <label>Label size
+      <select id="size">
+        <option value="a4">A4 sheet · 24 per page (64×33 mm)</option>
+        <option value="t50">Label printer 50×30 mm</option>
+        <option value="t38">Label printer 38×25 mm</option>
+      </select>
+    </label>
+    <label id="extraWrap">Add codes by hand
+      <input id="extra" type="text" placeholder="e.g. 1B6">
+    </label>
+    <label class="check"><input id="pp" type="checkbox" checked> Include PP (prepacked)</label>
+    <label class="check" id="pilotWrap" hidden><input id="pilotOnly" type="checkbox" checked> Pilot racks only (<span id="pilotText"></span>)</label>
+    <span id="count"></span>
+    <button id="printBtn" type="button">Print</button>
+    <div id="msg"></div>
+  </div>
+  <div class="sheet" id="sheet"></div>
+  <script type="module" src="/labels.js"></script>
+</body>
+</html>

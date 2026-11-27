@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12343b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Stock Finder">
+  <title>Stock Finder</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <button id="homeBtn" class="brand" data-act="home" aria-label="Home">
+      <img src="/icon.svg" alt="" width="28" height="28"> <span class="brand-text">Stock Finder</span>
+    </button>
+    <div class="top-right">
+      <button id="syncBtn" class="sync-pill" data-act="sync" hidden></button>
+      <button id="whoBtn" class="who" data-act="setup"></button>
+    </div>
+  </header>
+  <div id="banner" class="banner" hidden></div>
+  <main id="view" class="view"></main>
+
+  <div id="scanner" class="scanner" hidden>
+    <div class="scan-top">
+      <div id="scanStep" class="scan-step" aria-live="polite"></div>
+      <button class="scan-close" data-act="closeScanner" aria-label="Close scanner">Close</button>
+    </div>
+    <div class="reader-wrap"><div id="reader"></div></div>
+    <div id="scanInfo" class="scan-info"></div>
+    <form id="typeForm" class="type-form" autocomplete="off">
+      <input id="typeInput" placeholder="Or type rack / SKU" autocapitalize="characters" enterkeyhint="go">
+      <button type="submit">Enter</button>
+    </form>
+  </div>
+
+  <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

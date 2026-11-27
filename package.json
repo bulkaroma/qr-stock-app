@@ -1,0 +1,12 @@
+{
+  "name": "qr-stock-finder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phone app to find source bottles by rack, scan them out and back in, and keep Google Sheets locations up to date.",
+  "type": "module",
+  "scripts": {
+    "dev": "node dev/server.js",
+    "dev:mock": "MOCK_SHEETS=1 MOCK_SEED=1 APP_PIN=1234 node dev/server.js",
+    "test": "node --test test/*.test.js"
+  }
+}
